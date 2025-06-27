@@ -190,9 +190,69 @@ labs(
 
 ```{r}
 #| label: label-me-3
+#| warning: false
+#| error: false
+options(tigris_use_cache = TRUE)
+az_counties <- counties(
+    state = "AZ",
+    year = 2021,
+    progress_bar = FALSE
+)
+
+pop_data <- read_excel("data/co-est2023-pop-04.xlsx", 
+                       skip = 5, 
+                       n_max = 15,
+                       col_names = c("county", "base_2020", "pop_2020", 
+                                     "pop_2021", "pop_2022", "pop_2023"))
+
+pop_data <- pop_data |>
+    mutate(
+        county = sub("\\.(.+) County, Arizona", "\\1", county),
+        total_pop_change_20_23 = pop_2023 - pop_2020
+    ) |>
+    select(-c(base_2020, pop_2020, pop_2021, pop_2022, pop_2023))
 
 ```
 
+
+```{r}
+#| label: label-me-3a
+#| warning: false
+#| error: false
+
+az_data <- az_counties |>
+    left_join(
+        pop_data, 
+        by = c("NAME" = "county")
+    )
+
+rdbu_palette <- rev(brewer.pal(5, "RdBu"))
+
+ggplot(data = az_data) +
+geom_sf(aes(fill = total_pop_change_20_23), 
+        color = "white") +
+
+scale_fill_gradientn(colors = rdbu_palette,
+                    name = "Population change",
+                    labels = function(x) format(x, big.mark = ",")) +
+
+coord_sf() +
+labs(
+    title = "Resident Population Change for Counties in AZ",
+    subtitle = "July 01, 2020 to July 01, 2023",
+    caption = "Source: Shapefile obtained using {tigris} R package, v2.0.1\npopulation change data from the US Census Bureau",
+    x = "Longitude",
+    y = "Latitude"
+) +
+  theme_minimal(base_size = 12) + 
+  theme(
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.grid = element_line(color = "gray90"),
+     plot.title.position = "plot"
+  )
+
+```
 ## 4.  Arizona state of Indiginous Tribal Regions
 
 ## 5. Arizona state of patchwork
