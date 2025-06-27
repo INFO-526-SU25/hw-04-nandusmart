@@ -50,7 +50,7 @@ plotE <- ggplot(county, aes(x = homeownership, y = poverty)) +
   geom_point(aes(color = metro)) +
   geom_smooth(
     data = county %>% filter(metro == "no"),
-    method = "loess", se = FALSE,
+    se = FALSE,
     aes(linetype = "no"),
     color = "#5980fb"
   ) +
@@ -102,9 +102,19 @@ combined_plot2 <- (plotE | plotF) /
                  (plotG | plotH)
                 
 
+
+
+```
+
+
+```{r}
+#| label: HW 01_QN 3c q
+#| warning: false
+#| error: false
+#| echo: false
+
 combined_plot
 combined_plot2
-
 ```
 
 ## 2.  Arizona state of counties
