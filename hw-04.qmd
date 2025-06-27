@@ -1,31 +1,119 @@
 ---
 title: "HW 04"
-author: "INSERT YOUR NAME HERE"
+author: "Nandakumar"
 format:
   html:
     embed-resources: true
 toc: true
 ---
+```{r setup}
+if (!require("pacman")) 
+  install.packages("pacman")
 
-```{r load-packages, message = FALSE}
-library(tidyverse)
-# add any other packages you use here
+pacman::p_load(tidyverse, glue, scales, ggthemes, openintro, ggrepel, patchwork)
+
+devtools::install_github("tidyverse/dsbox")
+
+###All responses are in comments within the code****
+
 ```
 
 
 ## 1 - A second chance
 
+I'm choosing the HW01 -- Question #3c as quoted here -- https://github.com/INFO-526-SU25/hw-01-nandusmart/issues/1
+
+Missed geom_smooth & few others with county data, will try to do it differently this time around.
+
 ```{r}
-#| label: label-me-1
+#| label: HW 01_QN 3c
+#| warning: false
+#| error: false
+
+##Plot A
+ggplot2::theme_set(ggplot2::theme(base_size = 16))
+
+plotA <- ggplot(county, aes(x = homeownership, y = poverty)) +
+  geom_point() +
+  ggtitle("Plot A")
+
+plotB <- ggplot(county, aes(x = homeownership, y = poverty)) +
+  geom_point() + geom_smooth(se=FALSE) + labs(title="Plot B")
+
+plotC <- ggplot(county, aes(x=homeownership, y=poverty, group=metro)) + geom_point() + geom_smooth(se=FALSE, color="green") + labs(title="Plot C")
+
+plotD <- ggplot(county, aes(x=homeownership, y=poverty, group=metro)) + geom_smooth(se=FALSE) + geom_point() + labs(title="Plot D")
+
+metro_yes <- county |> filter(metro == "yes")
+metro_no <- county  |> filter(metro == "no")
+plotE <- ggplot(county, aes(x = homeownership, y = poverty)) +
+  geom_point(aes(color = metro)) +
+  geom_smooth(
+    data = county %>% filter(metro == "no"),
+    method = "loess", se = FALSE,
+    aes(linetype = "no"),
+    color = "#5980fb"
+  ) +
+  
+  geom_smooth(
+    data = county %>% filter(metro == "yes"),
+    method = "loess", se = FALSE,
+    aes(linetype = "yes"),
+    color = "#5980fb"
+  ) +
+  
+  scale_color_manual(
+    values = c("no" = "#f8766e", "yes" = "#01bfc3", "NA" = "#868686"),
+    name = "metro"
+  ) +
+  scale_linetype_manual(
+    values = c("no" = "solid", "yes" = "dashed"),
+    name = "metro"
+  ) +
+  
+  theme(
+    axis.ticks.length = unit(0.25, "cm"),
+    axis.ticks = element_line(color = "black"),
+    legend.position = "right",
+    legend.box = "vertical"
+  ) +
+  
+  guides(
+    linetype = guide_legend(order = 1),  
+    color = guide_legend(order = 2)       
+  ) +
+  
+  ggtitle("Plot E")
+
+plotF <- ggplot(county, aes(x=homeownership, y=poverty, group=metro, color=metro)) +
+  geom_point() + geom_smooth(se=FALSE) + labs(title="Plot F")
+
+
+plotG <- ggplot(county, aes(x = homeownership, y = poverty)) +
+ labs(title="Plot G") + geom_point(data=county, aes(x=homeownership, y=poverty, color=metro)) + geom_smooth(data=county, aes(x=homeownership, y=poverty), se=FALSE) 
+
+plotH <- ggplot(county, aes(x=homeownership, y=poverty, group=metro, color=metro)) +
+  geom_point() +  labs(title="Plot H")
+
+
+combined_plot <- (plotA | plotB) /
+                 (plotC | plotD)
+combined_plot2 <- (plotE | plotF) /
+                 (plotG | plotH)
+                
+
+combined_plot
+combined_plot2
 
 ```
-
 
 ## 2.  Arizona state of counties
 
 ```{r}
 #| label: label-me-2
 
+ 
+  
 ```
 
 ## 3.  Arizona state of population change
