@@ -255,4 +255,255 @@ labs(
 ```
 ## 4.  Arizona state of Indiginous Tribal Regions
 
+```{r}
+#| label: label-me-4
+#| warning: false
+#| error: false
+
+az_counties <- counties(
+    state = "AZ",
+    year = 2021,
+    progress_bar = FALSE
+)
+
+tribal_data <- st_read("data/American_Indian_Reservations_in_Arizona.shp") |>
+    st_transform(crs = st_crs("EPSG:4269")) |>
+    mutate(
+        x = st_coordinates(st_centroid(geometry))[, 1],
+        y = st_coordinates(st_centroid(geometry))[, 2]
+    ) |>
+    glimpse()
+
+```
+ 
+```{r}
+#| label: label-me-4a
+#| warning: false
+#| error: false
+
+ggplot(az_counties) +
+geom_sf(
+    fill = 'grey90', 
+    color = "white"
+) +
+
+geom_sf(
+    data = tribal_data, 
+    linewidth = 1, 
+    fill = NA, 
+    color = "black"
+) +
+
+geom_label_repel(
+    data = tribal_data |>     
+        filter(NAME %in% c("Hopi Tribe", 
+                           "Navajo Nation", 
+                           "White Mountain Apache Tribe", 
+                           "San Carlos Apache Tribe", 
+                           "Tohono O’odham Nation")),
+    aes(x = x, 
+        y = y, 
+        label = NAME),
+    size = 4,
+    min.segment.length = 0.1,
+    box.padding = 0.5,
+    segment.color = "grey20"
+) +
+
+coord_sf() +
+labs(
+    title = "Indigenous Tribal Boundaries in AZ",
+    caption = "Source: Shapefile obtained using {tigris} R package, v2.0.1\nIndigenous Tribe Shapefile obtained from AZGeo Data",
+    x = "Longitude",
+    y = "Latitude"
+) +
+
+  theme_minimal(base_size = 12) + 
+  theme(
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.grid = element_line(color = "gray90"),
+     plot.title.position = "plot"
+  )
+
+```
+
 ## 5. Arizona state of patchwork
+
+```{r}
+#| label: label-me-5
+#| warning: false
+#| error: false
+
+az_counties <- counties(state = "AZ",
+                        year = 2021,
+                        progress_bar = FALSE) |>
+    mutate(
+        name = gsub("\\s+County$", "", NAME),
+        x = st_coordinates(st_centroid(geometry))[, 1],
+        y = st_coordinates(st_centroid(geometry))[, 2]
+    )
+
+tribal_data <- st_read("data/American_Indian_Reservations_in_Arizona.shp") |>
+    st_transform(crs = st_crs("EPSG:4269")) |>
+    mutate(
+        x = st_coordinates(st_centroid(geometry))[, 1],
+        y = st_coordinates(st_centroid(geometry))[, 2]
+    )
+
+```
+
+
+```{r}
+#| label: label-me-5a
+#| warning: false
+#| error: false
+
+main_plot <- ggplot(data = az_data) +
+
+    geom_sf(
+        aes(fill = total_pop_change_20_23), 
+        color = "white"
+    ) +
+    
+    scale_fill_gradientn(
+        colors = rdbu_palette,
+        name = "Population change",
+        labels = function(x) format(x, big.mark = ","),
+        guide = guide_colorbar(barwidth = 9,
+                               barheight = 1,
+                               direction = "horizontal",
+                               title.position = "top")
+    ) +
+
+    geom_rect(
+        aes(xmin = -113.5, 
+            xmax = -110, 
+            ymin = 31.25, 
+            ymax = 34.25),
+        fill = NA, 
+        color = "black", 
+        linetype = "dashed", 
+        linewidth = 0.5
+    ) +
+
+    geom_segment(
+        data = data.frame(x = c(-113.5, -110),
+                          y = c(34.25, 31.25),
+                          xend = c(-122, -116.75),
+                          yend = c(32.75, 28)),
+        aes(x = x, 
+            y = y, 
+            xend = xend, 
+            yend = yend),
+        color = "black", 
+        linetype = "dashed", 
+        linewidth = 0.5
+    ) +
+
+    geom_label_repel(
+        data = filter(az_counties, name %in% c("Maricopa", "Pinal", "Pima")),
+        aes(x = x, 
+            y = y, 
+            label = NAME),
+        size = 4,
+        min.segment.length = 0.1,
+        box.padding = 0.5,
+        segment.color = "grey20"
+    ) +
+
+    coord_sf(
+        xlim = c(-122, -109), 
+        ylim = c(28.5, 37)
+    ) +
+
+    labs(
+        title = "Resident Population Change for Counties in AZ",
+        subtitle = "July 01, 2020 to July 01, 2023",
+        caption = "Source: Shapefile obtained using {tigris} R package, v2.0.1\npopulation change data from the US Census Bureau\nIndigenous Tribe Shapefile obtained from AZGeo Data",
+        x = "Longitude",
+        y = "Latitude"
+    ) +
+    
+    theme(
+        legend.position = c(0.0, 0.7),
+        legend.justification = c(0, 0),
+        plot.title.position = "plot",
+        panel.background = element_rect(fill = "white", color = NA),
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.grid = element_line(color = "gray90")
+    )
+
+
+
+
+```
+
+```{r}
+#| label: label-me-5b
+#| warning: false
+#| error: false
+
+zoom_plot <- ggplot() +
+    geom_sf(
+        data = filter(az_data, 
+                      NAME %in% c("Maricopa", 
+                                  "Pinal", 
+                                  "Pima", 
+                                  "Santa Cruz", 
+                                  "Gila", 
+                                  "Yavapai")), 
+        aes(fill = total_pop_change_20_23), 
+        color = "white"
+    ) +
+
+    geom_sf(
+        data = tribal_data, 
+        fill = NA, 
+        color = "black", 
+        linewidth = 0.75
+    ) +
+    
+    scale_fill_gradientn(
+        colors = rdbu_palette,
+        name = NULL,
+        labels = NULL,
+        limits = range(az_data$total_pop_change_20_23,
+                       na.rm = TRUE)
+    ) +
+    
+    geom_label_repel(
+        data = filter(tribal_data, 
+                      NAME %in% c("White Mountain Apache Tribe",
+                                  "San Carlos Apache Tribe",
+                                  "Tohono O’odham Nation")),
+        aes(x = x, 
+            y = y, 
+            label = NAME),
+        size = 3, 
+        box.padding = 0.5, 
+        min.segment.length = 0
+    ) +
+
+    coord_sf(
+        xlim = c(-113.5, -110), 
+        ylim = c(31.25, 34.25)
+    ) +
+
+    theme_void() +
+    theme(
+        panel.background = element_rect(fill = "grey50"),
+        legend.position = "none"
+    )
+
+final_map <- main_plot +
+    inset_element(
+        zoom_plot, 
+        left = 0.0, 
+        bottom = 0.0, 
+        right = 0.5, 
+        top = 0.5
+    )
+
+final_map
+```
