@@ -246,7 +246,7 @@ labs(
 
 ```
 
-###Now lets do this plot for total population change from 2021 to 2022 
+### Now lets do this plot for total population change from 2021 to 2022 
 
 ```{r}
 #| label: label-me-3a
@@ -316,6 +316,8 @@ tribal_data <- st_read("data/American_Indian_Reservations_in_Arizona.shp") |>
         x = st_coordinates(st_centroid(geometry))[, 1],
         y = st_coordinates(st_centroid(geometry))[, 2]
     ) 
+
+# print(tribal_data, n=Inf)
 # |> glimpse()
 
 ```
@@ -372,6 +374,57 @@ labs(
 
 ```
 
+### Now lets plot all the Tribal regions
+
+```{r}
+#| label: label-me-4a2
+#| warning: false
+#| error: false
+#| echo: false
+
+ggplot(az_counties) +
+geom_sf(
+    fill = 'grey90', 
+    color = "white"
+) +
+
+geom_sf(
+    data = tribal_data, 
+    linewidth = 1, 
+    fill = NA, 
+    color = "black"
+) +
+
+geom_label_repel(
+    data = tribal_data,
+    aes(x = x, 
+        y = y, 
+        label = NAME),
+    size = 4,
+    min.segment.length = 0.1,
+    box.padding = 0.5,
+    segment.color = "grey20"
+) +
+
+coord_sf() +
+labs(
+    title = "Indigenous Tribal Boundaries in AZ",
+    caption = "Source: Shapefile obtained using {tigris} R package, v2.0.1\nIndigenous Tribe Shapefile obtained from AZGeo Data",
+    x = "Longitude",
+    y = "Latitude"
+) +
+
+  theme_minimal(base_size = 12) + 
+  theme(
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.grid = element_line(color = "gray90"),
+     plot.title.position = "plot"
+  )
+
+```
+
+
 ## 5. Arizona state of patchwork
 
 ```{r}
@@ -388,12 +441,14 @@ az_counties <- counties(state = "AZ",
         y = st_coordinates(st_centroid(geometry))[, 2]
     )
 
+
 tribal_data <- st_read("data/American_Indian_Reservations_in_Arizona.shp") |>
     st_transform(crs = st_crs("EPSG:4269")) |>
     mutate(
         x = st_coordinates(st_centroid(geometry))[, 1],
         y = st_coordinates(st_centroid(geometry))[, 2]
     )
+
 
 ```
 
@@ -532,6 +587,424 @@ zoom_plot <- ggplot() +
     coord_sf(
         xlim = c(-113.5, -110), 
         ylim = c(31.25, 34.25)
+    ) +
+
+    theme_void() +
+    theme(
+        panel.background = element_rect(fill = "grey50"),
+        legend.position = "none"
+    )
+
+final_map <- main_plot +
+    inset_element(
+        zoom_plot, 
+        left = 0.0, 
+        bottom = 0.0, 
+        right = 0.5, 
+        top = 0.5
+    )
+
+final_map
+```
+
+### Try for other Counties
+
+```{r}
+#| label: label-me-5a2
+#| warning: false
+#| error: false
+#| echo: false
+
+main_plot <- ggplot(data = az_data) +
+
+    geom_sf(
+        aes(fill = total_pop_change_20_23), 
+        color = "white"
+    ) +
+    
+    scale_fill_gradientn(
+        colors = rdbu_palette,
+        name = "Population change",
+        labels = function(x) format(x, big.mark = ","),
+        guide = guide_colorbar(barwidth = 9,
+                               barheight = 1,
+                               direction = "horizontal",
+                               title.position = "top")
+    ) +
+
+    geom_rect(
+        aes(xmin = -116, 
+            xmax = -113, 
+            ymin = 31, 
+            ymax = 37),
+        fill = NA, 
+        color = "black", 
+        linetype = "dashed", 
+        linewidth = 0.5
+    ) +
+
+    geom_segment(
+        data = data.frame(x = c(-116, -113),
+                          y = c(37, 31),
+                          xend = c(-122, -116.75),
+                          yend = c(32.75, 28)),
+        aes(x = x, 
+            y = y, 
+            xend = xend, 
+            yend = yend),
+        color = "black", 
+        linetype = "dashed", 
+        linewidth = 0.5
+    ) +
+
+    geom_label_repel(
+        data = filter(az_counties, name %in% c("Mohave", "La Paz", "Yuma")),
+        aes(x = x, 
+            y = y, 
+            label = NAME),
+        size = 4,
+        min.segment.length = 0.1,
+        box.padding = 0.5,
+        segment.color = "grey20"
+    ) +
+
+    coord_sf(
+        xlim = c(-122, -109), 
+        ylim = c(28.5, 37)
+    ) +
+
+    labs(
+        title = "Resident Population Change for Counties in AZ",
+        subtitle = "July 01, 2020 to July 01, 2023",
+        caption = "Source: Shapefile obtained using {tigris} R package, v2.0.1\npopulation change data from the US Census Bureau\nIndigenous Tribe Shapefile obtained from AZGeo Data",
+        x = "Longitude",
+        y = "Latitude"
+    ) +
+    
+    theme(
+        legend.position = c(0.0, 0.7),
+        legend.justification = c(0, 0),
+        plot.title.position = "plot",
+        panel.background = element_rect(fill = "white", color = NA),
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.grid = element_line(color = "gray90")
+    )
+
+
+zoom_plot <- ggplot() +
+    geom_sf(
+        data = filter(az_data, 
+                      NAME %in% c("Mohave", 
+                                  "La Paz", 
+                                  "Yuma")), 
+        aes(fill = total_pop_change_20_23), 
+        color = "white"
+    ) +
+
+    geom_sf(
+        data = tribal_data, 
+        fill = NA, 
+        color = "black", 
+        linewidth = 0.75
+    ) +
+    
+    scale_fill_gradientn(
+        colors = rdbu_palette,
+        name = NULL,
+        labels = NULL,
+        limits = range(az_data$total_pop_change_20_23,
+                       na.rm = TRUE)
+    ) +
+    
+    geom_label_repel(
+        data = tribal_data,
+        aes(x = x, 
+            y = y, 
+            label = NAME),
+        size = 3, 
+        box.padding = 0.5, 
+        min.segment.length = 0
+    ) +
+
+    coord_sf(
+        xlim = c(-116, -113), 
+        ylim = c(37, 31)
+    ) +
+
+    theme_void() +
+    theme(
+        panel.background = element_rect(fill = "grey50"),
+        legend.position = "none"
+    )
+
+final_map <- main_plot +
+    inset_element(
+        zoom_plot, 
+        left = 0.0, 
+        bottom = 0.0, 
+        right = 0.5, 
+        top = 0.5
+    )
+
+final_map
+```
+
+```{r}
+#| label: label-me-5a3
+#| warning: false
+#| error: false
+#| echo: false
+
+main_plot <- ggplot(data = az_data) +
+
+    geom_sf(
+        aes(fill = total_pop_change_20_23), 
+        color = "white"
+    ) +
+    
+    scale_fill_gradientn(
+        colors = rdbu_palette,
+        name = "Population change",
+        labels = function(x) format(x, big.mark = ","),
+        guide = guide_colorbar(barwidth = 9,
+                               barheight = 1,
+                               direction = "horizontal",
+                               title.position = "top")
+    ) +
+
+    geom_rect(
+        aes(xmin = -114, 
+            xmax = -109, 
+            ymin = 34, 
+            ymax = 37),
+        fill = NA, 
+        color = "black", 
+        linetype = "dashed", 
+        linewidth = 0.5
+    ) +
+
+    geom_segment(
+        data = data.frame(x = c(-114, -109),
+                          y = c(37, 34),
+                          xend = c(-122, -116.75),
+                          yend = c(32.75, 28)),
+        aes(x = x, 
+            y = y, 
+            xend = xend, 
+            yend = yend),
+        color = "black", 
+        linetype = "dashed", 
+        linewidth = 0.5
+    ) +
+
+    geom_label_repel(
+        data = filter(az_counties, name %in% c("Yavapai", "Coconino", "Navajo", "Apache")),
+        aes(x = x, 
+            y = y, 
+            label = NAME),
+        size = 4,
+        min.segment.length = 0.1,
+        box.padding = 0.5,
+        segment.color = "grey20"
+    ) +
+
+    coord_sf(
+        xlim = c(-122, -109), 
+        ylim = c(28.5, 37)
+    ) +
+
+    labs(
+        title = "Resident Population Change for Counties in AZ",
+        subtitle = "July 01, 2020 to July 01, 2023",
+        caption = "Source: Shapefile obtained using {tigris} R package, v2.0.1\npopulation change data from the US Census Bureau\nIndigenous Tribe Shapefile obtained from AZGeo Data",
+        x = "Longitude",
+        y = "Latitude"
+    ) +
+    
+    theme(
+        legend.position = c(0.0, 0.7),
+        legend.justification = c(0, 0),
+        plot.title.position = "plot",
+        panel.background = element_rect(fill = "white", color = NA),
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.grid = element_line(color = "gray90")
+    )
+
+
+zoom_plot <- ggplot() +
+    geom_sf(
+        data = filter(az_data, 
+                      NAME %in% c("Yavapai", "Coconino", "Navajo", "Apache")), 
+        aes(fill = total_pop_change_20_23), 
+        color = "white"
+    ) +
+
+    geom_sf(
+        data = tribal_data, 
+        fill = NA, 
+        color = "black", 
+        linewidth = 0.75
+    ) +
+    
+    scale_fill_gradientn(
+        colors = rdbu_palette,
+        name = NULL,
+        labels = NULL,
+        limits = range(az_data$total_pop_change_20_23,
+                       na.rm = TRUE)
+    ) +
+    
+    geom_label_repel(
+        data = tribal_data,
+        aes(x = x, 
+            y = y, 
+            label = NAME),
+        size = 3, 
+        box.padding = 0.5, 
+        min.segment.length = 0
+    ) +
+
+    coord_sf(
+        xlim = c(-114, -109), 
+        ylim = c(37, 34)
+    ) +
+
+    theme_void() +
+    theme(
+        panel.background = element_rect(fill = "grey50"),
+        legend.position = "none"
+    )
+
+final_map <- main_plot +
+    inset_element(
+        zoom_plot, 
+        left = 0.0, 
+        bottom = 0.0, 
+        right = 0.5, 
+        top = 0.5
+    )
+
+final_map
+```
+
+```{r}
+#| label: label-me-5a4
+#| warning: false
+#| error: false
+#| echo: false
+
+main_plot <- ggplot(data = az_data) +
+
+    geom_sf(
+        aes(fill = total_pop_change_20_23), 
+        color = "white"
+    ) +
+    
+    scale_fill_gradientn(
+        colors = rdbu_palette,
+        name = "Population change",
+        labels = function(x) format(x, big.mark = ","),
+        guide = guide_colorbar(barwidth = 9,
+                               barheight = 1,
+                               direction = "horizontal",
+                               title.position = "top")
+    ) +
+
+    geom_rect(
+        aes(xmin = -112, 
+            xmax = -109, 
+            ymin = 34.8, 
+            ymax = 30.5),
+        fill = NA, 
+        color = "black", 
+        linetype = "dashed", 
+        linewidth = 0.5
+    ) +
+
+    geom_segment(
+        data = data.frame(x = c(-112, -109),
+                          y = c(34.8, 30.5),
+                          xend = c(-122, -116.75),
+                          yend = c(32.75, 28)),
+        aes(x = x, 
+            y = y, 
+            xend = xend, 
+            yend = yend),
+        color = "black", 
+        linetype = "dashed", 
+        linewidth = 0.5
+    ) +
+
+    geom_label_repel(
+        data = filter(az_counties, name %in% c("Gila", "Greenlee", "Graham", "Cochise","Santa Cruz")),
+        aes(x = x, 
+            y = y, 
+            label = NAME),
+        size = 4,
+        min.segment.length = 0.1,
+        box.padding = 0.5,
+        segment.color = "grey20"
+    ) +
+
+    coord_sf(
+        xlim = c(-122, -109), 
+        ylim = c(28.5, 37)
+    ) +
+
+    labs(
+        title = "Resident Population Change for Counties in AZ",
+        subtitle = "July 01, 2020 to July 01, 2023",
+        caption = "Source: Shapefile obtained using {tigris} R package, v2.0.1\npopulation change data from the US Census Bureau\nIndigenous Tribe Shapefile obtained from AZGeo Data",
+        x = "Longitude",
+        y = "Latitude"
+    ) +
+    
+    theme(
+        legend.position = c(0.0, 0.7),
+        legend.justification = c(0, 0),
+        plot.title.position = "plot",
+        panel.background = element_rect(fill = "white", color = NA),
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.grid = element_line(color = "gray90")
+    )
+
+
+zoom_plot <- ggplot() +
+    geom_sf(
+        data = filter(az_data, 
+                      NAME %in% c("Gila", "Greenlee", "Graham", "Cochise","Santa Cruz")), 
+        aes(fill = total_pop_change_20_23), 
+        color = "white"
+    ) +
+
+    geom_sf(
+        data = tribal_data, 
+        fill = NA, 
+        color = "black", 
+        linewidth = 0.75
+    ) +
+    
+    scale_fill_gradientn(
+        colors = rdbu_palette,
+        name = NULL,
+        labels = NULL,
+        limits = range(az_data$total_pop_change_20_23,
+                       na.rm = TRUE)
+    ) +
+    
+    geom_label_repel(
+        data = tribal_data,
+        aes(x = x, 
+            y = y, 
+            label = NAME),
+        size = 3, 
+        box.padding = 0.5, 
+        min.segment.length = 0
+    ) +
+
+    coord_sf(
+        xlim = c(-112, -109), 
+        ylim = c(34.8, 30.5)
     ) +
 
     theme_void() +
