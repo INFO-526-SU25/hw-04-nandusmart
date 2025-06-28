@@ -253,6 +253,8 @@ labs(
 #| warning: false
 #| error: false
 
+#| code-fold: true
+
 pop_data_new <- read_excel("data/co-est2023-pop-04.xlsx", 
                        skip = 5, 
                        n_max = 15,
@@ -380,7 +382,7 @@ labs(
 #| label: label-me-4a2
 #| warning: false
 #| error: false
-#| echo: false
+#| code-fold: true
 
 ggplot(az_counties) +
 geom_sf(
@@ -613,7 +615,7 @@ final_map
 #| label: label-me-5a2
 #| warning: false
 #| error: false
-#| echo: false
+#| code-fold: true
 
 main_plot <- ggplot(data = az_data) +
 
@@ -753,7 +755,7 @@ final_map
 #| label: label-me-5a3
 #| warning: false
 #| error: false
-#| echo: false
+#| code-fold: true
 
 main_plot <- ggplot(data = az_data) +
 
@@ -891,7 +893,8 @@ final_map
 #| label: label-me-5a4
 #| warning: false
 #| error: false
-#| echo: false
+#| code-fold: true
+
 
 main_plot <- ggplot(data = az_data) +
 
